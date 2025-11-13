@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Management - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; --danger: #dc3545; --success: #28a745; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; margin-bottom: 20px; }
+        .user-item { background: #1a1a1a; padding: 15px; margin: 10px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        button { color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; margin: 0 2px; }
+        .danger { background: var(--danger); }
+        .success { background: var(--success); }
+        .primary { background: var(--primary); }
+        input { padding: 8px; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 3px; margin: 5px; width: 200px; }
+        .admin-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h3>Create User</h3>
+            <input type="text" id="new-username" placeholder="Username">
+            <input type="password" id="new-password" placeholder="Password">
+            <label style="margin-left: 10px;">
+                <input type="checkbox" id="is-admin"> Admin
+            </label>
+            <button class="success" onclick="createUser()">Create User</button>
+        </div>
+
+        <div class="card">
+            <h3>User List</h3>
+            {% for user in users %}
+            <div class="user-item">
+                <div>
+                    <strong>{{ user.username }}</strong>
+                    {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+                    <br>
+                    <small>Created: {{ user.created_at }}</small>
+                    {% if user.expiry_date %}
+                    <br><small>Expires: {{ user.expiry_date }}</small>
+                    {% endif %}
+                </div>
+                <div>
+                    <button class="primary" onclick="setExpiry('{{ user.username }}')">Set Expiry</button>
+                    {% if user.username != 'admin' %}
+                    <button class="danger" onclick="deleteUser('{{ user.username }}')">Delete</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        async function createUser() {
+            const username = document.getElementById('new-username').value;
+            const password = document.getElementById('new-password').value;
+            const isAdmin = document.getElementById('is-admin').checked;
+            
+            if (username && password) {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                formData.append('is_admin', isAdmin);
+                
+                await fetch('/api/users/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+                document.getElementById('is-admin').checked = false;
+                location.reload();
+            }
+        }
+
+        async function setExpiry(username) {
+            const days = prompt('Enter expiry in days:');
+            if (days) {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('days', days);
+                
+                await fetch('/api/users/expiry', {
+                    method: 'POST',
+                    body: formData
+                });
+                location.reload();
+            }
+        }
+
+        async function deleteUser(username) {
+            if (confirm('Are you sure you want to delete user ' + username + '?')) {
+                const formData = new FormData();
+                formData.append('username', username);
+                
+                await fetch('/api/users/delete', {
+                    method: 'POST',
+                    body: formData
+                });
+                location.reload();
+            }
+        }
+    </script>
+</body>
+  </html>
