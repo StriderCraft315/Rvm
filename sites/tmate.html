@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tmate - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .session-box { background: #1a1a1a; padding: 15px; border-radius: 5px; margin: 15px 0; font-family: monospace; }
+        .session-type { color: var(--primary); font-weight: bold; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tmate Session</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h3>Generate Tmate Session</h3>
+            <p>Tmate provides instant terminal sharing without requiring client-side software.</p>
+            <button onclick="generateSession()">Generate New Session</button>
+            
+            {% if tmate.ssh %}
+            <div class="session-box">
+                <div class="session-type">SSH Session:</div>
+                <div>{{ tmate.ssh }}</div>
+            </div>
+            {% endif %}
+            
+            {% if tmate.web %}
+            <div class="session-box">
+                <div class="session-type">Web Session:</div>
+                <div>{{ tmate.web }}</div>
+            </div>
+            {% endif %}
+            
+            {% if tmate.error %}
+            <div class="session-box" style="border-left: 4px solid #dc3545;">
+                <div>Error: {{ tmate.error }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function generateSession() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
