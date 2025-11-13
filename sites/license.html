@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>License - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; --success: #28a745; --danger: #dc3545; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 3px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px 0; }
+        .license-key { background: #1a1a1a; padding: 15px; border-radius: 5px; margin: 10px 0; font-family: monospace; word-break: break-all; }
+        .valid { color: var(--success); }
+        .invalid { color: var(--danger); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>License Management</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h3>Generate License</h3>
+            <input type="text" id="domain" placeholder="Domain (e.g., example.com)">
+            <input type="number" id="expiry-days" placeholder="Expiry in days" value="365">
+            <button onclick="generateLicense()">Generate License</button>
+            
+            <div id="license-result"></div>
+        </div>
+
+        <div class="card">
+            <h3>Validate License</h3>
+            <textarea id="license-key" placeholder="Paste license key here" rows="4"></textarea>
+            <button onclick="validateLicense()">Validate License</button>
+            
+            <div id="validation-result"></div>
+        </div>
+
+        <div class="card">
+            <h3>Current Licenses</h3>
+            {% for license in licenses %}
+            <div class="license-key">
+                <strong>Domain:</strong> {{ license.domain }}<br>
+                <strong>Expires:</strong> {{ license.expiry_date }}<br>
+                <strong>Key:</strong> {{ license.license_key }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        async function generateLicense() {
+            const domain = document.getElementById('domain').value;
+            const expiryDays = document.getElementById('expiry-days').value;
+            
+            if (domain && expiryDays) {
+                const formData = new FormData();
+                formData.append('domain', domain);
+                formData.append('expiry_days', expiryDays);
+                
+                const response = await fetch('/api/license/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.license_key) {
+                    document.getElementById('license-result').innerHTML = `
+                        <div class="license-key">
+                            <strong>Generated License:</strong><br>
+                            ${result.license_key}
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        async function validateLicense() {
+            const licenseKey = document.getElementById('license-key').value;
+            
+            if (licenseKey) {
+                const formData = new FormData();
+                formData.append('license_key', licenseKey);
+                
+                const response = await fetch('/api/license/validate', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('validation-result');
+                if (result.valid) {
+                    resultDiv.innerHTML = `<div class="valid">✅ ${result.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="invalid">❌ ${result.message}</div>`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
