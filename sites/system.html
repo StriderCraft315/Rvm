@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Tools - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; margin-bottom: 20px; }
+        button { color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .danger { background: var(--danger); }
+        .warning { background: var(--warning); color: black; }
+        .primary { background: var(--primary); }
+        input { padding: 8px; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 3px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>System Tools</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h3>Power Management</h3>
+            <p>Warning: These actions will affect the entire system.</p>
+            <button class="warning" onclick="powerControl('reboot')">Restart System</button>
+            <button class="danger" onclick="powerControl('shutdown')">Shutdown System</button>
+        </div>
+
+        <div class="card">
+            <h3>SSH Port Management</h3>
+            <p>Change the SSH port for enhanced security.</p>
+            <input type="number" id="ssh-port" placeholder="New SSH Port" min="1" max="65535" value="22">
+            <button class="primary" onclick="changeSSHPort()">Change SSH Port</button>
+        </div>
+
+        <div class="card">
+            <h3>Maintenance Mode</h3>
+            <p>Enable maintenance mode to restrict access.</p>
+            <button class="warning" onclick="toggleMaintenance(true)">Enable Maintenance</button>
+            <button class="primary" onclick="toggleMaintenance(false)">Disable Maintenance</button>
+        </div>
+    </div>
+
+    <script>
+        async function powerControl(action) {
+            if(confirm(`Are you sure you want to ${action} the system?`)) {
+                await fetch(`/api/system/power/${action}`, {method: 'POST'});
+            }
+        }
+
+        async function changeSSHPort() {
+            const newPort = document.getElementById('ssh-port').value;
+            if (newPort) {
+                const formData = new FormData();
+                formData.append('new_port', newPort);
+                
+                await fetch('/api/ssh/change-port', {
+                    method: 'POST',
+                    body: formData
+                });
+                alert('SSH port changed successfully');
+            }
+        }
+
+        async function toggleMaintenance(enable) {
+            const formData = new FormData();
+            formData.append('maintenance_mode', enable);
+            
+            await fetch('/api/config/update', {
+                method: 'POST',
+                body: formData
+            });
+            alert('Maintenance mode ' + (enable ? 'enabled' : 'disabled'));
+        }
+    </script>
+</body>
+</html>
