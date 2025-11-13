@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Virtualization - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; }
+        .vm-item, .image-item { background: #1a1a1a; padding: 15px; margin: 10px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        button { color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; margin: 0 2px; }
+        .start { background: var(--success); }
+        .stop { background: var(--danger); }
+        .restart { background: var(--warning); color: black; }
+        .create { background: var(--primary); }
+        .status { padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .running { background: var(--success); }
+        .stopped { background: var(--danger); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>KVM Virtualization</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Virtual Machines</h3>
+                <button onclick="refreshKVM()" style="margin-bottom: 15px;">Refresh</button>
+                <div id="kvm-vms">
+                    {% for vm in kvm_vms %}
+                    <div class="vm-item">
+                        <div>
+                            <strong>{{ vm.name }}</strong><br>
+                            <small>Status: <span class="status {{ 'running' if vm.status == 'running' else 'stopped' }}">{{ vm.status }}</span></small>
+                        </div>
+                        <div>
+                            <button class="start" onclick="controlVM('{{ vm.name }}', 'start')">Start</button>
+                            <button class="stop" onclick="controlVM('{{ vm.name }}', 'shutdown')">Stop</button>
+                            <button class="restart" onclick="controlVM('{{ vm.name }}', 'reboot')">Reboot</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>OS Images</h3>
+                <button onclick="refreshImages()" style="margin-bottom: 15px;">Refresh</button>
+                <div id="os-images">
+                    {% for image in os_images %}
+                    <div class="image-item">
+                        <div>
+                            <strong>{{ image.name }}</strong><br>
+                            <small>{{ (image.size / 1024 / 1024 / 1024) | round(2) }} GB</small>
+                        </div>
+                        <div>
+                            <button class="create" onclick="createVM('{{ image.name }}')">Create VM</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function refreshKVM() {
+            location.reload();
+        }
+
+        async function refreshImages() {
+            location.reload();
+        }
+
+        async function controlVM(vm, action) {
+            await fetch(`/api/kvm/vms/${vm}/${action}`, {method: 'POST'});
+            location.reload();
+        }
+
+        async function createVM(image) {
+            const name = prompt('Enter VM name:');
+            if (name) {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('os_image', image);
+                
+                await fetch('/api/kvm/vms/create', {
+                    method: 'POST',
+                    body: formData
+                });
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
