@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Manager - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .service-item { background: var(--card); padding: 15px; margin: 10px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444; }
+        button { color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; margin: 0 2px; }
+        .start { background: var(--success); }
+        .stop { background: var(--danger); }
+        .restart { background: var(--warning); color: black; }
+        .status { padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .running { background: var(--success); }
+        .stopped { background: var(--danger); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Service Manager</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div id="services-list">
+            {% for service in services %}
+            <div class="service-item">
+                <div>
+                    <strong>{{ service.name }}</strong><br>
+                    <small>Status: <span class="status running">{{ service.status }}</span></small>
+                </div>
+                <div>
+                    <button class="start" onclick="controlService('{{ service.name }}', 'start')">Start</button>
+                    <button class="stop" onclick="controlService('{{ service.name }}', 'stop')">Stop</button>
+                    <button class="restart" onclick="controlService('{{ service.name }}', 'restart')">Restart</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        async function controlService(service, action) {
+            await fetch(`/api/services/${action}/${service}`, {method: 'POST'});
+            location.reload();
+        }
+    </script>
+</body>
+</html>
