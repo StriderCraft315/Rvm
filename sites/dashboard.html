@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rvm - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: {{ config.background }}; --card: #2d2d2d; --text: white; --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: Arial; margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; }
+        .nav a { color: var(--text); text-decoration: none; padding: 8px 15px; border-radius: 5px; }
+        .nav a:hover { background: #3d3d3d; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; }
+        button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin: 2px; }
+        button:hover { opacity: 0.8; }
+        button.danger { background: var(--danger); }
+        button.success { background: var(--success); }
+        button.warning { background: var(--warning); color: black; }
+        .status { padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .running { background: var(--success); }
+        .stopped { background: var(--danger); }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #155724; }
+        .error { background: #721c24; }
+        .user-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 5px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 5px; text-align: center; border: 1px solid #444; }
+        .stat-value { font-size: 24px; font-weight: bold; margin: 10px 0; }
+        .progress-bar { background: #1a1a1a; height: 10px; border-radius: 5px; margin: 5px 0; overflow: hidden; }
+        .progress-fill { background: var(--primary); height: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ config.web_welcome }}</h1>
+            <div>
+                Welcome, <strong>{{ username }}</strong>
+                {% if is_admin %}<span class="user-badge">Admin</span>{% endif %}
+                | <a href="/logout" style="color: var(--primary);">Logout</a>
+            </div>
+        </div>
+
+        <div class="nav">
+            <a href="/">Dashboard</a>
+            <a href="/files">File Manager</a>
+            <a href="/services">Services</a>
+            <a href="/firewall">Firewall</a>
+            <a href="/virtualization">Virtualization</a>
+            <a href="/tmate">Tmate</a>
+            <a href="/system">System Tools</a>
+            {% if is_admin %}
+            <a href="/users">User Management</a>
+            <a href="/license">License</a>
+            {% endif %}
+            <a href="/settings">Settings</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>CPU Usage</div>
+                <div class="stat-value" id="cpu-usage">0%</div>
+                <div class="progress-bar"><div class="progress-fill" id="cpu-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-card">
+                <div>Memory Usage</div>
+                <div class="stat-value" id="memory-usage">0%</div>
+                <div class="progress-bar"><div class="progress-fill" id="memory-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-card">
+                <div>Disk Usage</div>
+                <div class="stat-value" id="disk-usage">0%</div>
+                <div class="progress-bar"><div class="progress-fill" id="disk-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-card">
+                <div>Uptime</div>
+                <div class="stat-value" id="uptime">-</div>
+                <div>Processes: <span id="process-count">0</span></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <button onclick="powerControl('reboot')" class="warning">Restart Server</button>
+                <button onclick="powerControl('shutdown')" class="danger">Shutdown</button>
+                <button onclick="generateTmate()">Generate Tmate</button>
+                <div id="tmate-output" style="margin-top: 10px; padding: 10px; background: #1a1a1a; border-radius: 5px;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Services Status</h3>
+                <div id="services-list">
+                    {% for service in services %}
+                    <div>{{ service.name }} <span class="status running">{{ service.status }}</span></div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Firewall Status</h3>
+                <div id="firewall-status">
+                    Status: <span class="status {{ 'running' if firewall.status == 'active' else 'stopped' }}">{{ firewall.status }}</span><br>
+                    Open Ports: {{ firewall.ports|join(', ') if firewall.ports else 'None' }}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>KVM Virtual Machines</h3>
+                <div id="kvm-vms">
+                    {% for vm in kvm_vms %}
+                    <div>{{ vm.name }} <span class="status {{ 'running' if vm.status == 'running' else 'stopped' }}">{{ vm.status }}</span></div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchAPI(endpoint, options = {}) {
+            const response = await fetch(endpoint, options);
+            return await response.json();
+        }
+
+        async function updateSystemInfo() {
+            const info = await fetchAPI('/api/system/info');
+            if (!info.error) {
+                document.getElementById('cpu-usage').textContent = info.cpu_usage + '%';
+                document.getElementById('memory-usage').textContent = info.memory_usage + '%';
+                document.getElementById('disk-usage').textContent = info.disk_usage + '%';
+                document.getElementById('uptime').textContent = info.uptime;
+                document.getElementById('process-count').textContent = info.processes;
+                
+                document.getElementById('cpu-bar').style.width = info.cpu_usage + '%';
+                document.getElementById('memory-bar').style.width = info.memory_usage + '%';
+                document.getElementById('disk-bar').style.width = info.disk_usage + '%';
+            }
+        }
+
+        async function generateTmate() {
+            const result = await fetchAPI('/api/tmate/generate');
+            if (!result.error) {
+                document.getElementById('tmate-output').innerHTML = `
+                    <strong>SSH:</strong> ${result.ssh}<br>
+                    <strong>Web:</strong> ${result.web}
+                `;
+            }
+        }
+
+        async function powerControl(action) {
+            if(confirm(`Are you sure you want to ${action} the system?`)) {
+                await fetch(`/api/system/power/${action}`, {method: 'POST'});
+            }
+        }
+
+        // Auto-update every 5 seconds
+        setInterval(updateSystemInfo, 5000);
+        updateSystemInfo();
+    </script>
+</body>
+  </html>
