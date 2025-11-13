@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firewall Manager - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; --danger: #dc3545; --success: #28a745; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; margin-bottom: 20px; }
+        .status { padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+        .running { background: var(--success); }
+        .stopped { background: var(--danger); }
+        button { color: white; border: none; padding: 8px 15px; border-radius: 3px; cursor: pointer; margin: 0 5px; }
+        .allow { background: var(--success); }
+        .deny { background: var(--danger); }
+        input { padding: 8px; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 3px; margin: 5px; }
+        .port-list { background: #1a1a1a; padding: 15px; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Firewall Manager</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h3>Firewall Status</h3>
+            <p>Status: <span class="status {{ 'running' if firewall.status == 'active' else 'stopped' }}">{{ firewall.status }}</span></p>
+            <div class="port-list">
+                <strong>Open Ports:</strong>
+                {% if firewall.ports %}
+                    {% for port in firewall.ports %}
+                    <div>{{ port }}</div>
+                    {% endfor %}
+                {% else %}
+                    <div>No ports open</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Manage Ports</h3>
+            <input type="text" id="port-input" placeholder="Port (e.g., 22 or 80/tcp)">
+            <button class="allow" onclick="firewallAction('allow')">Allow Port</button>
+            <button class="deny" onclick="firewallAction('deny')">Deny Port</button>
+        </div>
+    </div>
+
+    <script>
+        async function firewallAction(action) {
+            const port = document.getElementById('port-input').value;
+            if (port) {
+                const formData = new FormData();
+                formData.append('port', port);
+                
+                await fetch(`/api/firewall/ports/${action}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                document.getElementById('port-input').value = '';
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
