@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rvm - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; }
+        body { font-family: Arial; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: var(--card); padding: 40px; border-radius: 10px; width: 320px; border: 1px solid #444; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background: #0056b3; }
+        .flash { padding: 10px; margin: 10px 0; border-radius: 5px; text-align: center; }
+        .success { background: #155724; color: #d4edda; }
+        .error { background: #721c24; color: #f8d7da; }
+        .logo { text-align: center; margin-bottom: 20px; font-size: 24px; color: var(--primary); }
+        .register { text-align: center; margin-top: 15px; }
+        .register a { color: var(--primary); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="logo">Rvm Control Panel</div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="post">
+            <input type="text" name="username" placeholder="Username" value="admin" required>
+            <input type="password" name="password" placeholder="Password" value="admin123" required>
+            <button type="submit">Login</button>
+        </form>
+        {% if allow_registration == 'true' %}
+        <div class="register">
+            <a href="/register">Create Account</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
