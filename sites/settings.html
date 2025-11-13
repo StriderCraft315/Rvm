@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Settings - Rvm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --text: white; --primary: #007bff; }
+        body { font-family: Arial; margin: 0; padding: 20px; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: var(--primary); text-decoration: none; margin-right: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #444; margin-bottom: 20px; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 5px 0; background: #1a1a1a; border: 1px solid #444; color: white; border-radius: 3px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px 0; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Settings</h1>
+            <div>Welcome, <strong>{{ username }}</strong> | <a href="/" style="color: var(--primary);">Dashboard</a></div>
+        </div>
+
+        <div class="nav">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h3>System Settings</h3>
+            
+            <div class="form-group">
+                <label>SSH Welcome Message:</label>
+                <textarea id="ssh-welcome" rows="3">{{ config.ssh_welcome }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Web Welcome Message:</label>
+                <input type="text" id="web-welcome" value="{{ config.web_welcome }}">
+            </div>
+            
+            <div class="form-group">
+                <label>Footer Text:</label>
+                <input type="text" id="footer-text" value="{{ config.footer }}">
+            </div>
+            
+            <div class="form-group">
+                <label>Background Color:</label>
+                <input type="color" id="background-color" value="{{ config.background }}">
+            </div>
+            
+            <div class="form-group">
+                <label>Allow User Registration:</label>
+                <select id="allow-registration">
+                    <option value="true" {{ 'selected' if config.allow_registration == 'true' }}>Yes</option>
+                    <option value="false" {{ 'selected' if config.allow_registration == 'false' }}>No</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Maximum Users:</label>
+                <input type="number" id="max-users" value="{{ config.max_users }}">
+            </div>
+            
+            <button onclick="updateSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        async function updateSettings() {
+            const formData = new FormData();
+            formData.append('ssh_welcome', document.getElementById('ssh-welcome').value);
+            formData.append('web_welcome', document.getElementById('web-welcome').value);
+            formData.append('footer', document.getElementById('footer-text').value);
+            formData.append('background', document.getElementById('background-color').value);
+            formData.append('allow_registration', document.getElementById('allow-registration').value);
+            formData.append('max_users', document.getElementById('max-users').value);
+            
+            await fetch('/api/config/update', {
+                method: 'POST',
+                body: formData
+            });
+            alert('Settings updated successfully');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
